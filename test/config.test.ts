@@ -11,10 +11,10 @@ const PROD_ENV = {
   ARI_URL: 'http://10.0.0.2:8088/ari',
   ARI_USERNAME: 'aida',
   ARI_PASSWORD: 'pw',
-  MYSQL_HOST: '10.0.0.2',
+  PBX_DB_HOST: '10.0.0.2',
   MYSQL_USER: 'aida_integration',
   MYSQL_PASSWORD: 'pw',
-  MYSQL_DATABASE: 'asterisk',
+  PBX_DB_NAME: 'asterisk',
   DB_NAME: 'aidacalls_db',
   DB_HOST: 'runtime-db',
   DB_USER: 'aida_runtime',
@@ -107,7 +107,7 @@ test('production requires the dependencies this service now orchestrates itself'
 test('no AidaControl configuration is read or required any more', () => {
   const config = loadConfig({ ...PROD_ENV, AIDACONTROL_BASE_URL: 'http://stale:9010' });
   assert.equal(JSON.stringify(config).includes('stale:9010'), false);
-  assert.equal(config.nocodb.baseName, 'PlatformConfig');
+  assert.equal('baseName' in config.nocodb, false, 'the PlatformConfig base is found by its fixed name');
   assert.equal(config.livekit.agentName, 'aida-prime');
 });
 
@@ -119,10 +119,10 @@ test('retired PBX writer credentials and rollback flag are ignored', () => {
 
 test('POC provisioning is opt-in and requires its dedicated writer credentials', () => {
   const config = loadConfig({ ...PROD_ENV, PBX_PROVISIONING_ENABLED: 'true',
-    PBX_PROVISIONING_MYSQL_USER: 'pbx_writer', PBX_PROVISIONING_MYSQL_PASSWORD: 'writer-password' });
+    PBX_DB_PROVISIONING_USER: 'pbx_writer', PBX_DB_PROVISIONING_PASSWORD: 'writer-password' });
   assert.equal(config.pbxProvisioningMysql?.user, 'pbx_writer');
   assert.equal(config.pbxProvisioningMysql?.database, 'asterisk');
-  assert.throws(() => loadConfig({ ...PROD_ENV, PBX_PROVISIONING_ENABLED: 'true' }), /PBX_PROVISIONING_MYSQL_USER/);
+  assert.throws(() => loadConfig({ ...PROD_ENV, PBX_PROVISIONING_ENABLED: 'true' }), /PBX_DB_PROVISIONING_USER/);
   assert.throws(() => loadConfig({ ...PROD_ENV, PBX_PROVISIONING_ENABLED: 'yes' }), /PBX_PROVISIONING_ENABLED/);
 });
 
@@ -141,11 +141,24 @@ test('OFFICEPULSE_INSTANCE_ID is the PBX instance wire name and must fit its gra
   assert.throws(() => loadConfig({ ...PROD_ENV, OFFICEPULSE_INSTANCE_ID: '' }), /OFFICEPULSE_INSTANCE_ID is required/);
 });
 
+test('the former PBX database setting names still work, and the PBX_DB_* names win', () => {
+  const former = { ...PROD_ENV, PBX_DB_HOST: undefined, PBX_DB_NAME: undefined, MYSQL_HOST: 'old-pbx', MYSQL_PORT: '3307', MYSQL_DATABASE: 'asterisk_old',
+    PBX_INVENTORY_ENABLED: 'true', PBX_INVENTORY_MYSQL_USER: 'old_ro', PBX_INVENTORY_MYSQL_PASSWORD: 'old-ro-pw',
+    PBX_PROVISIONING_ENABLED: 'true', PBX_PROVISIONING_MYSQL_USER: 'old_writer', PBX_PROVISIONING_MYSQL_PASSWORD: 'old-writer-pw' };
+  const config = loadConfig(former);
+  assert.deepEqual(config.pbxInventoryMysql, { host: 'old-pbx', port: 3307, database: 'asterisk_old', user: 'old_ro', password: 'old-ro-pw' });
+  assert.deepEqual(config.pbxProvisioningMysql, { host: 'old-pbx', port: 3307, database: 'asterisk_old', user: 'old_writer', password: 'old-writer-pw' });
+  const both = loadConfig({ ...former, PBX_DB_HOST: 'new-pbx', PBX_DB_INVENTORY_USER: 'new_ro' });
+  assert.equal(both.pbxInventoryMysql?.host, 'new-pbx');
+  assert.equal(both.pbxInventoryMysql?.user, 'new_ro');
+  assert.equal(both.pbxProvisioningMysql?.user, 'old_writer');
+});
+
 test('PBX writer cannot reuse inventory or runtime account names', () => {
   for (const user of ['aida_runtime', 'inventory_ro']) {
     assert.throws(() => loadConfig({ ...PROD_ENV, PBX_PROVISIONING_ENABLED: 'true',
-      PBX_PROVISIONING_MYSQL_USER: user, PBX_PROVISIONING_MYSQL_PASSWORD: 'unused',
-      PBX_INVENTORY_ENABLED: 'true', PBX_INVENTORY_MYSQL_USER: 'inventory_ro', PBX_INVENTORY_MYSQL_PASSWORD: 'unused' }), /dedicated account/);
+      PBX_DB_PROVISIONING_USER: user, PBX_DB_PROVISIONING_PASSWORD: 'unused',
+      PBX_INVENTORY_ENABLED: 'true', PBX_DB_INVENTORY_USER: 'inventory_ro', PBX_DB_INVENTORY_PASSWORD: 'unused' }), /dedicated account/);
   }
 });
 

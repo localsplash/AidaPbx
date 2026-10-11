@@ -38,11 +38,11 @@ Settings follow the implemented environment → `aida-pbx` → `aida` → `*` pr
 
 ```text
 PBX_INVENTORY_ENABLED=true
-MYSQL_HOST=<OfficePulse MySQL host>
-MYSQL_PORT=3306
-MYSQL_DATABASE=asterisk
-PBX_INVENTORY_MYSQL_USER=aida_pbx_inventory_ro
-PBX_INVENTORY_MYSQL_PASSWORD=<read-only account password>
+PBX_DB_HOST=<OfficePulse MySQL host>
+PBX_DB_PORT=3306
+PBX_DB_NAME=asterisk
+PBX_DB_INVENTORY_USER=aida_pbx_inventory_ro
+PBX_DB_INVENTORY_PASSWORD=<read-only account password>
 OFFICEPULSE_INSTANCE_ID=<PBX instance name, e.g. officepulse-dev>
 ```
 
