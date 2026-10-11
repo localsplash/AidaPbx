@@ -140,9 +140,9 @@ test('inventory is absent from public ingress and disabled inventory cannot read
 });
 
 test('read-only inventory can run before LiveKit voice connectors with a dedicated SQL account', () => {
-  const config = loadConfig({ NODE_ENV: 'test', VOICE_ENABLED: 'false', PBX_INVENTORY_ENABLED: 'true',
+  const config = loadConfig({ NODE_ENV: 'test', VOICE_ENABLED: 'false',
     PBX_DB_HOST: 'pbx', PBX_DB_NAME: 'asterisk', PBX_DB_INVENTORY_USER: 'inventory_ro', PBX_DB_INVENTORY_PASSWORD: 'test-only' });
   assert.equal(config.pbxInventoryMysql?.host, 'pbx');
   assert.equal(config.pbxInventoryMysql?.user, 'inventory_ro');
-  assert.throws(() => loadConfig({ NODE_ENV: 'test', PBX_INVENTORY_ENABLED: 'true' }), /PBX_DB_INVENTORY_USER/);
+  assert.throws(() => loadConfig({ NODE_ENV: 'test', PBX_DB_INVENTORY_USER: 'inventory_ro' }), /PBX_DB_INVENTORY_PASSWORD/);
 });
