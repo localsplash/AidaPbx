@@ -13,7 +13,7 @@ export function agentConfig(env: NodeJS.ProcessEnv): AgentConfig | undefined {
   if (env.NATIVE_ADMISSION_ENABLED !== undefined && !['true', 'false'].includes(env.NATIVE_ADMISSION_ENABLED)) throw new ConfigError(['NATIVE_ADMISSION_ENABLED must be true or false']);
   if (env.NATIVE_ADMISSION_ENABLED !== 'true') return;
   const invalid = () => new ConfigError(['Native admission requires FASTAGI_BIND=127.0.0.1, voice, PBX inventory, distinct LIVEKIT_AGENT_NAME and LIVEKIT_TRUNK_ENDPOINT; validate startup settings']);
-  if (env.FASTAGI_BIND !== '127.0.0.1' || env.VOICE_ENABLED !== 'true' || env.PBX_INVENTORY_ENABLED !== 'true' || !/^[a-zA-Z0-9_.-]{1,80}$/.test(env.LIVEKIT_TRUNK_ENDPOINT ?? '') ||
+  if (env.FASTAGI_BIND !== '127.0.0.1' || env.VOICE_ENABLED !== 'true' || !(env.PBX_DB_INVENTORY_USER || env.PBX_INVENTORY_MYSQL_USER) || !/^[a-zA-Z0-9_.-]{1,80}$/.test(env.LIVEKIT_TRUNK_ENDPOINT ?? '') ||
     !/^[a-zA-Z0-9_.-]{1,80}$/.test(env.LIVEKIT_AGENT_NAME ?? '') || env.LIVEKIT_AGENT_NAME === 'aida-prime') throw invalid();
   // ID_BASE_URL is filled from the Identity application's own PlatformConfig record at startup (#20); only environment-only mode sets it by hand.
   const identity = () => new ConfigError(['Native admission requires an HTTPS Identity origin: set the PlatformConfig record identity/APP_BASE_URL (ID_BASE_URL only with PLATFORM_CONFIG_MODE=environment)']);

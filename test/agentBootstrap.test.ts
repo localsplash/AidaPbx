@@ -360,7 +360,7 @@ test('ARI fallback redirects caller, clears only AI legs, and preserves human br
 test('admission is opt-in, rejects incomplete/ambiguous configuration and refuses the retired profile map', () => {
   assert.equal(agentConfig({}), undefined);
   assert.throws(() => agentConfig({ NATIVE_ADMISSION_ENABLED: 'true' }));
-  const env = { FASTAGI_BIND: '127.0.0.1', NATIVE_ADMISSION_ENABLED: 'true', VOICE_ENABLED: 'true', PBX_INVENTORY_ENABLED: 'true', LIVEKIT_AGENT_NAME: 'aida-prime-bootstrap-dev', LIVEKIT_TRUNK_ENDPOINT: 'livekit', ID_BASE_URL: 'https://id.example.test' };
+  const env = { FASTAGI_BIND: '127.0.0.1', NATIVE_ADMISSION_ENABLED: 'true', VOICE_ENABLED: 'true', PBX_DB_INVENTORY_USER: 'inventory_ro', LIVEKIT_AGENT_NAME: 'aida-prime-bootstrap-dev', LIVEKIT_TRUNK_ENDPOINT: 'livekit', ID_BASE_URL: 'https://id.example.test' };
   assert.equal(agentConfig(env)?.startupTimeoutMs, 30000);
   assert.equal('profileIds' in agentConfig(env)!, false);
   const retired = (error: ConfigError) => error instanceof ConfigError && error.problems.length === 1 &&
@@ -441,7 +441,7 @@ test('RTC data callback accepts reliable ready and transcripts and ignores lossy
 });
 
 test('admission consumes the Identity origin resolved from PlatformConfig and the background tenant check requests it', async () => {
-  const env = { FASTAGI_BIND: '127.0.0.1', NATIVE_ADMISSION_ENABLED: 'true', VOICE_ENABLED: 'true', PBX_INVENTORY_ENABLED: 'true', LIVEKIT_AGENT_NAME: 'aida-prime-bootstrap-dev', LIVEKIT_TRUNK_ENDPOINT: 'livekit' };
+  const env = { FASTAGI_BIND: '127.0.0.1', NATIVE_ADMISSION_ENABLED: 'true', VOICE_ENABLED: 'true', PBX_DB_INVENTORY_USER: 'inventory_ro', LIVEKIT_AGENT_NAME: 'aida-prime-bootstrap-dev', LIVEKIT_TRUNK_ENDPOINT: 'livekit' };
   const noco = new FakeNocoApi();
   noco.seed('cfg_tbl_Setting', [{ app: 'identity', settingKey: 'APP_BASE_URL', settingValue: 'https://id.example.test/' },
     { app: 'aida-pbx', settingKey: 'APP_BASE_URL', settingValue: 'https://officepulse.example.test' }]);

@@ -34,10 +34,9 @@ Every `/v1/admin/pbx/*` route except `/contexts` requires exactly one `context` 
 
 ## Configuration and database access
 
-Settings follow the implemented environment → `aida-pbx` → `aida` → `*` precedence in `PlatformConfig.cfg_tbl_Setting`. Inventory is disabled by default. Set:
+Settings follow the implemented environment → `aida-pbx` → `aida` → `*` precedence in `PlatformConfig.cfg_tbl_Setting`. Inventory is always on in production; elsewhere it is on once its user is set. Set:
 
 ```text
-PBX_INVENTORY_ENABLED=true
 PBX_DB_HOST=<OfficePulse MySQL host>
 PBX_DB_PORT=3306
 PBX_DB_NAME=asterisk

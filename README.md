@@ -55,18 +55,16 @@ admission reads the persisted per-context/DID profile assignments
 | Setting | Default | Purpose |
 | --- | --- | --- |
 | `HTTP_PORT` / `PUBLIC_HTTP_PORT` / `HTTP_BIND` | 8085 / 8086 / 0.0.0.0 | Private API and health/callback listener |
-| `TRUSTED_SERVER_CIDRS` / `TRUSTED_PROXY_CIDRS` | Required in production / empty | Separate service and proxy trust |
+| `TRUSTED_SERVER_CIDRS` / `TRUSTED_PROXY_CIDRS` | Required in production / same as `TRUSTED_SERVER_CIDRS` | Who may call the private API / whose X-Forwarded-For is believed (set only when proxies sit elsewhere; empty believes none) |
 | `HTTP_RATE_LIMIT_PER_MINUTE` / `HTTP_MAX_BODY_BYTES` | 300 / 65536 | HTTP limits |
 | `DB_HOST`, `DB_PORT`, `DB_USER`, `DB_PASSWORD` | Explicit production values / optional port 3306 | Runtime database; app=aida-pbx DB_* rows are seeded by AidaPlatformDB setup |
 | `DB_NAME` | Explicit in production; aida_pbx_db in development | Only canonical runtime schema; migrations reject the external asterisk schema |
 | `NOCODB_BASE_URL`, `NOCODB_API_TOKEN`, `NOCODB_TIMEOUT_MS` | Required / 4000 | Scoped settings discovery in the `PlatformConfig` base (found by that fixed name) |
-| `PBX_INVENTORY_ENABLED` | false | Enable private vendor configuration reads |
 | `PBX_DB_HOST`, `PBX_DB_PORT`, `PBX_DB_NAME` | Explicit production values / port 3306 | The OfficePulse PBX's own Asterisk database (formerly `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DATABASE`, still read) |
-| `PBX_DB_INVENTORY_USER`, `PBX_DB_INVENTORY_PASSWORD` (formerly `PBX_INVENTORY_MYSQL_*`) | Required when inventory enabled | Dedicated SELECT-only account |
+| `PBX_DB_INVENTORY_USER`, `PBX_DB_INVENTORY_PASSWORD` (formerly `PBX_INVENTORY_MYSQL_*`) | Required in production; elsewhere inventory is on once the user is set | Dedicated SELECT-only account |
 | `OFFICEPULSE_INSTANCE_ID` | `officepulse-dev` outside production | PBX instance wire name `pbxInstanceId` (`^[A-Za-z0-9_.-]{1,80}$`); with an Asterisk context it forms the routing scope |
 | `PBX_INVENTORY_TENANTS_JSON` | retired | Startup fails when set: PBX scope is the Asterisk context. See `docs/PBX_SOURCE_OF_TRUTH.md` (Migrating from tenant maps) |
-| `PBX_PROVISIONING_ENABLED` | false | Register the POC PBX mutation routes |
-| `PBX_DB_PROVISIONING_USER`, `PBX_DB_PROVISIONING_PASSWORD` (formerly `PBX_PROVISIONING_MYSQL_*`) | required when enabled | Dedicated Realtime writer account |
+| `PBX_DB_PROVISIONING_USER`, `PBX_DB_PROVISIONING_PASSWORD` (formerly `PBX_PROVISIONING_MYSQL_*`) | Required in production; elsewhere the PBX mutation routes exist once the user is set | Dedicated Realtime writer account |
 | `NATIVE_ADMISSION_ENABLED` | false | Opt in to native Agent bootstrap; see `docs/AGENT_BOOTSTRAP.md` |
 | `AGENT_PROFILE_IDS_JSON` | retired | Startup fails when set: profiles are assigned per context/DID in `aida_tbl_ProfileAssignment` through AidaAdmin. See `docs/AGENT_BOOTSTRAP.md` |
 | `AGENT_CONFIG_REFRESH_SECONDS` | 300 (range 30–3600) | Background refresh of the cached profiles; never a call-path timeout |

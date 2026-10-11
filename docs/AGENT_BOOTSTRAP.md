@@ -20,7 +20,7 @@ been exercised.
 ## Configuration and authorization
 
 Admission is opt-in with `NATIVE_ADMISSION_ENABLED=true`, `VOICE_ENABLED=true`,
-`PBX_INVENTORY_ENABLED=true`, `FASTAGI_BIND=127.0.0.1`, an HTTPS Identity origin (see [Identity base URL](#identity-base-url)),
+PBX inventory credentials (`PBX_DB_INVENTORY_USER`), `FASTAGI_BIND=127.0.0.1`, an HTTPS Identity origin (see [Identity base URL](#identity-base-url)),
 a configured `LIVEKIT_TRUNK_ENDPOINT`, and an explicit `LIVEKIT_AGENT_NAME`
 (such as `aida-prime-bootstrap-dev`). The legacy `aida-prime` name is rejected.
 Use the same dispatch name in the repository-owned Agent worker. Its deployment
