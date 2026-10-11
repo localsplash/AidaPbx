@@ -10,7 +10,7 @@ Coordinate the public contract with the companion AidaAdmin implementation brief
 
 ## Required architectural decisions
 
-- Register mutations only when an explicit `PBX_PROVISIONING_ENABLED=true` setting and dedicated writer credentials are present. Disabled means the mutation routes are absent, not present-but-permissive.
+- Register mutations only when dedicated writer credentials are present (always required in production; the former `PBX_PROVISIONING_ENABLED` switch is retired). Disabled means the mutation routes are absent, not present-but-permissive.
 - Keep the existing private network admission. Extension and queue routes may use the authenticated Operations gateway. DID routes accept current Identity assignments only from the trusted AidaAdmin backend and must not be exposed through the browser gateway; never accept a tenant from an unverified forwarded header.
 - Use a dedicated least-privilege MySQL account. Do not reuse the runtime migration account or inventory read account, perform DDL at application startup, or grant access to unrelated Asterisk tables.
 - Write Asterisk Realtime tables directly and transactionally. The API must never edit `extensions.conf` or another `/etc/asterisk` file at runtime.

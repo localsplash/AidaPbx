@@ -4,7 +4,7 @@ OfficePulse writes the six installed Asterisk Realtime tables transactionally. A
 
 ## Enablement and ownership
 
-Set `PBX_PROVISIONING_ENABLED=true` plus dedicated `PBX_DB_PROVISIONING_USER` and `PBX_DB_PROVISIONING_PASSWORD`. Database coordinates use `PBX_DB_HOST`, `PBX_DB_PORT`, and `PBX_DB_NAME`. (The former `PBX_PROVISIONING_MYSQL_*` and `MYSQL_*` names are still read.) The writer account must differ from runtime and inventory accounts. Without the flag and credentials, mutation routes are absent. Enable `PBX_INVENTORY_ENABLED=true` with its separate SELECT account for the administration UI.
+Set the dedicated `PBX_DB_PROVISIONING_USER` and `PBX_DB_PROVISIONING_PASSWORD`; production requires them. Database coordinates use `PBX_DB_HOST`, `PBX_DB_PORT`, and `PBX_DB_NAME`. (The former `PBX_PROVISIONING_MYSQL_*` and `MYSQL_*` names are still read.) The writer account must differ from runtime and inventory accounts. Outside production, without those credentials the mutation routes are absent. The administration UI also needs the separate SELECT account (`PBX_DB_INVENTORY_USER` and `_PASSWORD`), likewise required in production. (The former `PBX_PROVISIONING_ENABLED` and `PBX_INVENTORY_ENABLED` switches are no longer read.)
 
 Apply `deploy/sql/pbx-provisioning-grants.sql` manually after reviewing the installed schema. It allows only SELECT/INSERT/DELETE on the required tables, with SELECT limited to `id` on auth/AOR tables; even the writer cannot retrieve existing SIP passwords. There are no application startup PBX migrations, UPDATE, DDL or unrelated-table grants. Inventory also needs SELECT on `extensions` to list contexts, derive dialable numbers from managed routes and recognize queue ownership markers, including when writes are disabled for rollback.
 
@@ -70,7 +70,7 @@ References: [Realtime families and switch](https://docs.asterisk.org/Fundamental
 
 Mutations report `committed`, never `active`. Native endpoint/queue inventory reports `unknown` activation. Readiness distinguishes `pbx-provisioning` disabled/database unavailable/available from `pbx-apply` delegation and effective-state unknown. Healthy SQL does not make the latter ready. An effective-state adapter is needed before this implementation can assert `active`.
 
-Deploy OfficePulse and operator delegation first, AidaAdmin backend second, UI last. To stop administration, set `PBX_PROVISIONING_ENABLED=false` and restart the integration, or hide its administration UI. This preserves PBX objects and existing calls. Before intentional PBX rollback, export the affected six tables and reviewed static files, remove/change managed DID references before queues/extensions, and restore only reviewed routes through an operator change. Never restore the removed synchronization ledger or delete Identity number assignments as rollback.
+Deploy OfficePulse and operator delegation first, AidaAdmin backend second, UI last. To stop administration, hide its administration UI, or revoke the writer account's grants on the PBX database. This preserves PBX objects and existing calls. Before intentional PBX rollback, export the affected six tables and reviewed static files, remove/change managed DID references before queues/extensions, and restore only reviewed routes through an operator change. Never restore the removed synchronization ledger or delete Identity number assignments as rollback.
 
 ## Verification and external evidence
 

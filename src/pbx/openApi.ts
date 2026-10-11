@@ -15,7 +15,7 @@ const applyState = { ...string, enum: ['committed', 'active', 'unknown'], descri
 const error = (description: string) => ({ description, content: json(ref('Error')) });
 const op = (summary: string, method: string, parameters: unknown[], output?: string, input?: string) => ({
   tags: ['Backend API'], summary,
-  description: 'Private admitted backend network or Identity-authenticated Operations gateway (Super Admin) with mutation CSRF. Ownership is derived from Asterisk records inside the requested context of this PBX instance. PBX mutations and DID reads require PBX_PROVISIONING_ENABLED=true plus dedicated writer credentials. Disabled mutation routes are absent. Credentials are returned only by extension creation; responses must not be cached.',
+  description: 'Private admitted backend network or Identity-authenticated Operations gateway (Super Admin) with mutation CSRF. Ownership is derived from Asterisk records inside the requested context of this PBX instance. PBX mutations and DID reads require the dedicated writer credentials (PBX_DB_PROVISIONING_USER and _PASSWORD). Disabled mutation routes are absent. Credentials are returned only by extension creation; responses must not be cached.',
   'x-access-policy': 'trusted-backend-network', parameters: [context, ...parameters],
   ...(input ? { requestBody: { required: true, content: json(ref(input)) } } : {}),
   responses: {
@@ -30,7 +30,7 @@ const op = (summary: string, method: string, parameters: unknown[], output?: str
 });
 const didOp = (summary: string, method: string, parameters: unknown[], output?: string, input?: string) => ({
   ...op(summary, method, parameters, output, input),
-  description: 'Private admitted backend network. AidaAdmin revalidates Identity tenant access, resolves the tenant\'s extension and DID ingress contexts, and supplies the current tenant Number assignments. DID routes are excluded from the browser Operations gateway. PBX mutations and DID reads require PBX_PROVISIONING_ENABLED=true plus dedicated writer credentials.',
+  description: 'Private admitted backend network. AidaAdmin revalidates Identity tenant access, resolves the tenant\'s extension and DID ingress contexts, and supplies the current tenant Number assignments. DID routes are excluded from the browser Operations gateway. PBX mutations and DID reads require the dedicated writer credentials (PBX_DB_PROVISIONING_USER and _PASSWORD).',
   parameters: [context, didContext, ...parameters],
 });
 const ext = parameter('extension', { ...string, pattern: '^[0-9]{2,12}$' });

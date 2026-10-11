@@ -166,12 +166,6 @@ export function loadConfig(rawEnv: NodeJS.ProcessEnv = process.env): AppConfig {
     problems.push('VOICE_ENABLED must be true or false');
   }
   const voiceEnabled = env.VOICE_ENABLED !== 'false';
-  if (env.PBX_INVENTORY_ENABLED !== undefined && !['true', 'false'].includes(env.PBX_INVENTORY_ENABLED)) {
-    problems.push('PBX_INVENTORY_ENABLED must be true or false');
-  }
-  if (env.PBX_PROVISIONING_ENABLED !== undefined && !['true', 'false'].includes(env.PBX_PROVISIONING_ENABLED)) {
-    problems.push('PBX_PROVISIONING_ENABLED must be true or false');
-  }
   // The retired tenant map fails startup explicitly (#23): PBX scope is the Asterisk context, never a copied map.
   if (env.PBX_INVENTORY_TENANTS_JSON?.trim()) {
     problems.push('PBX_INVENTORY_TENANTS_JSON is retired: PBX scope is the Asterisk context. See docs/PBX_SOURCE_OF_TRUTH.md (Migrating from tenant maps)');
@@ -198,7 +192,8 @@ export function loadConfig(rawEnv: NodeJS.ProcessEnv = process.env): AppConfig {
   }
 
   const trustedServerCidrs = cidrList(env, 'TRUSTED_SERVER_CIDRS', problems);
-  const trustedProxyCidrs = cidrList(env, 'TRUSTED_PROXY_CIDRS', problems);
+  // Proxies on the trusted network are believed unless a separate list is set.
+  const trustedProxyCidrs = env.TRUSTED_PROXY_CIDRS === undefined ? trustedServerCidrs : cidrList(env, 'TRUSTED_PROXY_CIDRS', problems);
   if (isProd && trustedServerCidrs.length === 0) {
     problems.push('TRUSTED_SERVER_CIDRS must be non-empty in production');
   }
@@ -207,18 +202,22 @@ export function loadConfig(rawEnv: NodeJS.ProcessEnv = process.env): AppConfig {
     voiceEnabled ? str(env, key, problems, required(fallback)) : '';
 
   const pusherAppId = optStr(env, 'PUSHER_APP_ID');
+  // Both PBX logins are always on in production; elsewhere each is on once its
+  // user is set, so a development box can run without the vendor database.
+  const pbxInventory = isProd || !!env.PBX_DB_INVENTORY_USER;
+  const pbxProvisioning = isProd || !!env.PBX_DB_PROVISIONING_USER;
 
   const config: AppConfig = {
     env: runtimeEnv,
     voiceEnabled,
-    pbxInventoryMysql: env.PBX_INVENTORY_ENABLED === 'true' ? {
+    pbxInventoryMysql: pbxInventory ? {
       host: str(env, 'PBX_DB_HOST', problems, required('127.0.0.1')),
       port: int(env, 'PBX_DB_PORT', 3306, problems, 1, 65535),
       database: str(env, 'PBX_DB_NAME', problems, required('asterisk')),
       user: str(env, 'PBX_DB_INVENTORY_USER', problems),
       password: str(env, 'PBX_DB_INVENTORY_PASSWORD', problems),
     } : undefined,
-    pbxProvisioningMysql: env.PBX_PROVISIONING_ENABLED === 'true' ? {
+    pbxProvisioningMysql: pbxProvisioning ? {
       host: str(env, 'PBX_DB_HOST', problems, required('127.0.0.1')),
       port: int(env, 'PBX_DB_PORT', 3306, problems, 1, 65535),
       database: str(env, 'PBX_DB_NAME', problems, required('asterisk')),
@@ -288,9 +287,9 @@ export function loadConfig(rawEnv: NodeJS.ProcessEnv = process.env): AppConfig {
     },
   };
 
-  if (config.pbxProvisioningMysql && [config.runtimeMysql.user, config.pbxInventoryMysql?.user].includes(config.pbxProvisioningMysql.user)) {
+  if (config.pbxProvisioningMysql?.user && [config.runtimeMysql.user, config.pbxInventoryMysql?.user].includes(config.pbxProvisioningMysql.user)) {
     problems.push('PBX_DB_PROVISIONING_USER must be a dedicated account distinct from runtime and inventory users');
   }
-  if (problems.length > 0) throw new ConfigError(problems);
+  if (problems.length > 0) throw new ConfigError([...new Set(problems)]);
   return config;
 }
