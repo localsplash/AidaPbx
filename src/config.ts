@@ -48,7 +48,6 @@ export interface AppConfig {
   nocodb: {
     baseUrl: string;
     apiToken: string;
-    baseName: string;
     timeoutMs: number;
   };
   livekit: {
@@ -75,6 +74,27 @@ export interface AppConfig {
     /** PJSIP endpoint name of the existing LiveKit Cloud SIP trunk. */
     livekitTrunkEndpoint?: string;
   };
+}
+
+/**
+ * The OfficePulse PBX's Asterisk database, named like the runtime's DB_* keys.
+ * The former names still work until AidaPlatformDB's installer has copied
+ * every environment's rows; a new name, when present, wins.
+ */
+export const RENAMED_PBX_DB_KEYS: ReadonlyArray<readonly [current: string, former: string]> = [
+  ['PBX_DB_HOST', 'MYSQL_HOST'],
+  ['PBX_DB_PORT', 'MYSQL_PORT'],
+  ['PBX_DB_NAME', 'MYSQL_DATABASE'],
+  ['PBX_DB_INVENTORY_USER', 'PBX_INVENTORY_MYSQL_USER'],
+  ['PBX_DB_INVENTORY_PASSWORD', 'PBX_INVENTORY_MYSQL_PASSWORD'],
+  ['PBX_DB_PROVISIONING_USER', 'PBX_PROVISIONING_MYSQL_USER'],
+  ['PBX_DB_PROVISIONING_PASSWORD', 'PBX_PROVISIONING_MYSQL_PASSWORD'],
+];
+
+function withPbxDbKeys(env: NodeJS.ProcessEnv): NodeJS.ProcessEnv {
+  const out = { ...env };
+  for (const [current, former] of RENAMED_PBX_DB_KEYS) if (!out[current] && out[former]) out[current] = out[former];
+  return out;
 }
 
 function str(env: NodeJS.ProcessEnv, key: string, problems: string[], fallback?: string): string {
@@ -134,7 +154,8 @@ function cidrList(env: NodeJS.ProcessEnv, key: string, problems: string[]): stri
  * Voice connectors require their own credentials only when VOICE_ENABLED=true.
  * PlatformConfig and the runtime database remain independent of PBX inventory.
  */
-export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
+export function loadConfig(rawEnv: NodeJS.ProcessEnv = process.env): AppConfig {
+  const env = withPbxDbKeys(rawEnv);
   const problems: string[] = [];
   const runtimeEnv = (env.NODE_ENV as RuntimeEnv) || 'development';
   if (!['production', 'development', 'test'].includes(runtimeEnv)) {
@@ -191,18 +212,18 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     env: runtimeEnv,
     voiceEnabled,
     pbxInventoryMysql: env.PBX_INVENTORY_ENABLED === 'true' ? {
-      host: str(env, 'MYSQL_HOST', problems, required('127.0.0.1')),
-      port: int(env, 'MYSQL_PORT', 3306, problems, 1, 65535),
-      database: str(env, 'MYSQL_DATABASE', problems, required('asterisk')),
-      user: str(env, 'PBX_INVENTORY_MYSQL_USER', problems),
-      password: str(env, 'PBX_INVENTORY_MYSQL_PASSWORD', problems),
+      host: str(env, 'PBX_DB_HOST', problems, required('127.0.0.1')),
+      port: int(env, 'PBX_DB_PORT', 3306, problems, 1, 65535),
+      database: str(env, 'PBX_DB_NAME', problems, required('asterisk')),
+      user: str(env, 'PBX_DB_INVENTORY_USER', problems),
+      password: str(env, 'PBX_DB_INVENTORY_PASSWORD', problems),
     } : undefined,
     pbxProvisioningMysql: env.PBX_PROVISIONING_ENABLED === 'true' ? {
-      host: str(env, 'MYSQL_HOST', problems, required('127.0.0.1')),
-      port: int(env, 'MYSQL_PORT', 3306, problems, 1, 65535),
-      database: str(env, 'MYSQL_DATABASE', problems, required('asterisk')),
-      user: str(env, 'PBX_PROVISIONING_MYSQL_USER', problems),
-      password: str(env, 'PBX_PROVISIONING_MYSQL_PASSWORD', problems),
+      host: str(env, 'PBX_DB_HOST', problems, required('127.0.0.1')),
+      port: int(env, 'PBX_DB_PORT', 3306, problems, 1, 65535),
+      database: str(env, 'PBX_DB_NAME', problems, required('asterisk')),
+      user: str(env, 'PBX_DB_PROVISIONING_USER', problems),
+      password: str(env, 'PBX_DB_PROVISIONING_PASSWORD', problems),
     } : undefined,
     logLevel,
     officePulseInstanceId,
@@ -239,7 +260,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
     nocodb: {
       baseUrl: str(env, 'NOCODB_BASE_URL', problems, required('http://127.0.0.1:8080')),
       apiToken: str(env, 'NOCODB_API_TOKEN', problems, required('dev-only')),
-      baseName: env.NOCODB_BASE_NAME ?? 'PlatformConfig',
       timeoutMs: int(env, 'NOCODB_TIMEOUT_MS', 4_000, problems, 100),
     },
     livekit: {
@@ -269,7 +289,7 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): AppConfig {
   };
 
   if (config.pbxProvisioningMysql && [config.runtimeMysql.user, config.pbxInventoryMysql?.user].includes(config.pbxProvisioningMysql.user)) {
-    problems.push('PBX_PROVISIONING_MYSQL_USER must be a dedicated account distinct from runtime and inventory users');
+    problems.push('PBX_DB_PROVISIONING_USER must be a dedicated account distinct from runtime and inventory users');
   }
   if (problems.length > 0) throw new ConfigError(problems);
   return config;

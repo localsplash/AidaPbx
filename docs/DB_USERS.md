@@ -73,7 +73,8 @@ source-host/password substitution and verification of the installed Realtime
 schema; they are separate from the platform provisioning script.
 
 Their password homes are PlatformConfig's `aida-pbx` settings
-`PBX_INVENTORY_MYSQL_PASSWORD` and `PBX_PROVISIONING_MYSQL_PASSWORD`, alongside
+`PBX_DB_INVENTORY_PASSWORD` and `PBX_DB_PROVISIONING_PASSWORD` (formerly
+`PBX_INVENTORY_MYSQL_PASSWORD` and `PBX_PROVISIONING_MYSQL_PASSWORD`), alongside
 the corresponding `_USER` settings. Inventory gets only the listed SELECTs;
 the writer gets the listed SELECT/INSERT/DELETE grants, with SELECT limited to
 `id` on auth/AOR tables. The runtime account receives no PBX grants.

@@ -4,7 +4,7 @@ OfficePulse writes the six installed Asterisk Realtime tables transactionally. A
 
 ## Enablement and ownership
 
-Set `PBX_PROVISIONING_ENABLED=true` plus dedicated `PBX_PROVISIONING_MYSQL_USER` and `PBX_PROVISIONING_MYSQL_PASSWORD`. Database coordinates use `MYSQL_HOST`, `MYSQL_PORT`, and `MYSQL_DATABASE`. The writer account must differ from runtime and inventory accounts. Without the flag and credentials, mutation routes are absent. Enable `PBX_INVENTORY_ENABLED=true` with its separate SELECT account for the administration UI.
+Set `PBX_PROVISIONING_ENABLED=true` plus dedicated `PBX_DB_PROVISIONING_USER` and `PBX_DB_PROVISIONING_PASSWORD`. Database coordinates use `PBX_DB_HOST`, `PBX_DB_PORT`, and `PBX_DB_NAME`. (The former `PBX_PROVISIONING_MYSQL_*` and `MYSQL_*` names are still read.) The writer account must differ from runtime and inventory accounts. Without the flag and credentials, mutation routes are absent. Enable `PBX_INVENTORY_ENABLED=true` with its separate SELECT account for the administration UI.
 
 Apply `deploy/sql/pbx-provisioning-grants.sql` manually after reviewing the installed schema. It allows only SELECT/INSERT/DELETE on the required tables, with SELECT limited to `id` on auth/AOR tables; even the writer cannot retrieve existing SIP passwords. There are no application startup PBX migrations, UPDATE, DDL or unrelated-table grants. Inventory also needs SELECT on `extensions` to list contexts, derive dialable numbers from managed routes and recognize queue ownership markers, including when writes are disabled for rollback.
 
