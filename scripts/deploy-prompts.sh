@@ -21,6 +21,10 @@ STAMP=$(date +%Y%m%d%H%M%S)
 if [ -d "$SOUNDS_DIR" ]; then
   cp -a "$SOUNDS_DIR" "${SOUNDS_DIR}.prev.${STAMP}"
   echo "previous prompts kept at ${SOUNDS_DIR}.prev.${STAMP}"
+  # Only the newest KEEP_PREVIOUS copies stay (rollback.sh restores the newest).
+  ls -d "${SOUNDS_DIR}".prev.* 2>/dev/null | sort | head -n -"${KEEP_PREVIOUS:-2}" | while IFS= read -r old; do
+    rm -rf -- "$old" && echo "removed older prompt set $old"
+  done
 fi
 mkdir -p "$SOUNDS_DIR"
 install -m 0644 prompts/audio/*.ulaw "$SOUNDS_DIR/"

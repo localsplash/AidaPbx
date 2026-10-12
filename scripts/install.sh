@@ -10,7 +10,8 @@
 # execute the historical runtime-schema.sql directly. Also expects
 # the Asterisk templates under asterisk/ installed on the OfficePulse
 # host after operator review; this installer does not alter the PBX. Keeps the
-# previous service release for scripts/rollback.sh (not database rollback).
+# two previous service releases (KEEP_PREVIOUS) for scripts/rollback.sh (not
+# database rollback); older copies are removed.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -25,6 +26,10 @@ npm run build
 if [ -d "$INSTALL_DIR/dist" ]; then
   cp -a "$INSTALL_DIR" "${INSTALL_DIR}.prev.${STAMP}"
   echo "previous release kept at ${INSTALL_DIR}.prev.${STAMP}"
+  # Only the newest KEEP_PREVIOUS copies stay (rollback.sh restores the newest).
+  ls -d "${INSTALL_DIR}".prev.* 2>/dev/null | sort | head -n -"${KEEP_PREVIOUS:-2}" | while IFS= read -r old; do
+    rm -rf -- "$old" && echo "removed older release $old"
+  done
 fi
 
 mkdir -p "$INSTALL_DIR"
